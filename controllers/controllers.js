@@ -1,9 +1,12 @@
-const contacts = require("../models/contacts");
-const schema = require("../validate/validate");
+const {
+  Contact,
+  validateSchema,
+  validateStatusSchema,
+} = require("../../models/contact");
 
-const listContactsCtrl = async (req, res, next) => {
+const listContacts = async (req, res, next) => {
   try {
-    const result = await contacts.listContacts();
+    const result = await Contact.find();
     res.json({
       status: "success",
       code: 200,
@@ -21,10 +24,10 @@ const listContactsCtrl = async (req, res, next) => {
   }
 };
 
-const getContactByIdCtrl = async (req, res, next) => {
+const getContactById = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await contacts.getContactById(contactId);
+    const result = await Contact.findById(contactId);
     if (!result) {
       res.status(404).json({ message: "Not found" });
     }
@@ -40,14 +43,14 @@ const getContactByIdCtrl = async (req, res, next) => {
   }
 };
 
-const addContactCtrl = async (req, res, next) => {
+const addContact = async (req, res, next) => {
   try {
-    const { error } = schema.validate(req.body);
+    const { error } = validateSchema.validate(req.body);
     if (error) {
       res.status(404).json({ message: "missing required name field" });
       return;
     }
-    const newContact = await contacts.addContact(req.body);
+    const newContact = await Contact.create(req.body);
     res.status(201).json({
       status: "success",
       code: 201,
@@ -58,10 +61,10 @@ const addContactCtrl = async (req, res, next) => {
   }
 };
 
-const removeContactCtrl = async (req, res, next) => {
+const removeContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await contacts.removeContact(contactId);
+    const result = await Contact.findByIdAndRemove(contactId);
     if (!result) {
       res.status(404).json({ message: "Not found" });
     }
@@ -78,15 +81,17 @@ const removeContactCtrl = async (req, res, next) => {
   }
 };
 
-const updateContactCtrl = async (req, res, next) => {
+const updateContact = async (req, res, next) => {
   try {
-    const { error } = schema.validate(req.body);
+    const { error } = validateSchema.validate(req.body);
     if (error) {
       res.status(404).json({ message: "missing required name field" });
       return;
     }
     const { contactId } = req.params;
-    const result = await contacts.updateContact(contactId, req.body);
+    const result = await Contact.findByIdAndUpdate(contactId, req.body, {
+      new: true,
+    });
     if (!result) {
       res.status(400).json({ message: "missing fields" });
     }
@@ -103,10 +108,39 @@ const updateContactCtrl = async (req, res, next) => {
   }
 };
 
+const updateStatusContact = async (req, res, next) => {
+  try {
+    const { error } = validateStatusSchema.validate(req.body);
+    if (error) {
+      res.status(400).json({ message: "missing field favorite" });
+    }
+    const { contactId } = req.params;
+
+    const updatedStatus = await Contact.findByIdAndUpdate(contactId, req.body, {
+      new: true,
+    });
+
+    if (!updatedStatus) {
+      res.status(400).json({ message: "missing field favorite" });
+    }
+    res.json({
+      status: "success",
+      code: 200,
+      message: `Status 'favorite' is ${req.body.favorite}`,
+      data: {
+        result: updatedStatus,
+      },
+    });
+  } catch (error) {
+    res.status(404).json({ message: "Not found" });
+  }
+};
+
 module.exports = {
-  listContactsCtrl,
-  getContactByIdCtrl,
-  addContactCtrl,
-  removeContactCtrl,
-  updateContactCtrl,
+  listContacts,
+  getContactById,
+  addContact,
+  removeContact,
+  updateContact,
+  updateStatusContact,
 };
