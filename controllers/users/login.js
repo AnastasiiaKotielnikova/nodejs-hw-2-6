@@ -1,6 +1,6 @@
-const { User, validateLoginSchema } = require("../../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { User, validateLoginSchema } = require("../../models/user");
 const { SECRET_JWT } = process.env;
 
 const login = async (req, res, next) => {
